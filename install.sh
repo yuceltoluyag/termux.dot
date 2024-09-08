@@ -11,6 +11,7 @@ php=false
 postgres=false
 zsh=false
 
+
 function show_usage() {
     echo -e "\\e[32mKullanım: install.sh [seçenekler]\\e[m"
     echo -e "Kullanabileceğiniz seçenekler:"
@@ -69,22 +70,22 @@ function check_storage_permission() {
 function install_zsh() {
     if ! [ -x "$(command -v zsh)" ]; then
         echo -e "\\e[32m[ zsh ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y zsh >/dev/null 2>&1 && echo "Zsh başarıyla yüklendi" || echo "Zsh yükleme başarısız"
+        pkg install -y zsh  2>&1 && echo "Zsh başarıyla yüklendi" || echo "Zsh yükleme başarısız"
     fi
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
         echo -e "\\e[32m[ oh-my-zsh ]\\e[m deposu kopyalanıyor"
-        git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" --depth 1 --quiet >/dev/null
+        git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" --depth 1 
     fi
     curl -fsLo "$HOME/.oh-my-zsh/themes/lambda-mod.zsh-theme" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/lambda-mod.zsh-theme
     curl -fsLo "$HOME/.zshrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.zshrc
     curl -fsLo "$HOME/.profile" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.profile
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" ]; then
         echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" --quiet >/dev/null
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" 
     fi
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" ]; then
         echo -e "\\e[32m[ oh-my-zsh ]\\e[m otomatik öneri eklentisi indiriliyor"
-        git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" --quiet >/dev/null
+        git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" 
     fi
 
     chsh -s zsh
@@ -94,7 +95,7 @@ function install_elixir() {
     # unzip kurulu değilse yükle
     if ! [ -x "$(command -v unzip)" ]; then
         echo -e "\\e[32m[ unzip ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y unzip >/dev/null 2>&1 && echo "Unzip başarıyla yüklendi" || echo "Unzip yükleme başarısız"
+        pkg install -y unzip  2>&1 && echo "Unzip başarıyla yüklendi" || echo "Unzip yükleme başarısız"
     fi
 
     mkdir -p "$HOME/.elixir" && cd "$HOME/.elixir" || exit
@@ -105,7 +106,13 @@ function install_elixir() {
     cd bin || exit
     echo -e "\\e[32m[ elixir ]\\e[m ikili dosyalar düzeltiliyor"
     termux-fix-shebang elixir elixirc iex mix
-    echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
+
+    # Elixir'in PATH'e eklenmesi
+    if ! grep -q 'export PATH="$PATH:$HOME/.elixir/bin"' "$HOME/.profile"; then
+        echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
+        export PATH="$PATH:$HOME/.elixir/bin"
+    fi
+
     cd "$HOME" || exit
 }
 
@@ -113,7 +120,7 @@ function install_elixir() {
 function install_node() {
     if ! [ -x "$(command -v node)" ]; then
         echo -e "\\e[32m[ nodejs ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y nodejs >/dev/null 2>&1 && echo "Node.js başarıyla yüklendi" || echo "Node.js yükleme başarısız"
+        pkg install -y nodejs  2>&1 && echo "Node.js başarıyla yüklendi" || echo "Node.js yükleme başarısız"
 
     fi
     echo -e "\\e[32m[ npm ]\\e[m önek yapılandırılıyor"
@@ -126,16 +133,16 @@ function install_node() {
         rm -rf "$HOME/.yarn"
     fi
     echo -e "\\e[32m[ yarn ]\\e[m nightly sürümü indiriliyor"
-    curl -s -o- -L https://yarnpkg.com/install.sh | bash -s -- --nightly >/dev/null 2>&1
+    curl -s -o- -L https://yarnpkg.com/install.sh | bash -s -- --nightly  2>&1
     export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
     echo -e "\\e[32m[ yarn ]\\e[m önek yapılandırılıyor"
-    $HOME/.yarn/bin/yarn config set prefix "$HOME/.npm-packages" >/dev/null 2>&1
+    $HOME/.yarn/bin/yarn config set prefix "$HOME/.npm-packages"  2>&1
 }
 
 function install_requirements() {
     if ! [ -x "$(command -v git)" ]; then
         echo -e "\\e[32m[ git ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y git >/dev/null 2>&1
+        pkg install -y git  2>&1
     fi
 
     if [ ! -d "$HOME/.local/bin" ]; then
@@ -151,43 +158,46 @@ function install_requirements() {
 
 function install_postgres() {
     if ! [ -x "$(command -v pg_ctl)" ]; then
+        # PostgreSQL'in PATH'e eklenmesi
+        if ! grep -q 'export PATH="$PREFIX/pgsql/bin:$PATH"' "$HOME/.profile"; then
+            echo 'export PATH="$PREFIX/pgsql/bin:$PATH"' >> "$HOME/.profile"
+            export PATH="$PREFIX/pgsql/bin:$PATH"
+        fi
         echo -e "\\e[32m[ postgres ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y postgresql postgresql-dev >/dev/null 2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
+        pkg install -y postgresql postgresql-dev  2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
         echo -e "\\e[32m[ postgres ]\\e[m yapılandırmalar oluşturuluyor"
-        initdb ~/.pg >/dev/null 2>&1
+        
+        initdb ~/.pg  2>&1
     fi
 
-    if ! pg_ctl -D ~/.pg status >/dev/null 2>&1; then
+    if ! pg_ctl -D ~/.pg status  2>&1; then
         echo -e "\\e[32m[ postgres ]\\e[m başlatılıyor..."
-        pg_ctl -D ~/.pg start >/dev/null 2>&1
+        pg_ctl -D ~/.pg start  2>&1
     else
         echo -e "\\e[32m[ postgres ]\\e[m zaten çalışıyor."
     fi
 
-    if ! createdb "$(whoami)" >/dev/null 2>&1; then
+    if ! createdb "$(whoami)"  2>&1; then
         echo -e "\\e[32m[ postgres ]\\e[m yeni veritabanı oluşturuluyor"
         createdb "$(whoami)"
     fi
 }
 
-
-
-
 function install_neovim() {
     if ! [ -x "$(command -v nvim)" ]; then
         echo -e "\\e[32m[ neovim ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y neovim >/dev/null 2>&1 && echo "Neovim başarıyla yüklendi" || echo "Neovim yükleme başarısız"
+        pkg install -y neovim  2>&1 && echo "Neovim başarıyla yüklendi" || echo "Neovim yükleme başarısız"
 
     fi
     if ! [ -x "$(command -v clang)" ]; then
         echo -e "\\e[32m[ neovim ]\\e[m clang bulunamadı, yükleniyor"
-        pkg install -y clang libcrypt-dev >/dev/null 2>&1 && echo "Clang başarıyla yüklendi" || echo "Clang yükleme başarısız"
+        pkg install -y clang libcrypt-dev  2>&1 && echo "Clang başarıyla yüklendi" || echo "Clang yükleme başarısız"
     fi
     if ! [ -x "$(command -v python)" ]; then
         echo -e "\\e[32m[ neovim ]\\e[m python bulunamadı, yükleniyor"
-        pkg install -y python python-dev >/dev/null 2>&1
+        pkg install -y python  2>&1
     fi
-    pip3 install neovim >/dev/null 2>&1
+    pip3 install neovim  2>&1
     curl -fsLo "$HOME/.config/nvim/autoload/plug.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/autoload/plug.vim
     curl -fsLo "$HOME/.config/nvim/colors/Tomorrow-Night-Eighties.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/colors/Tomorrow-Night-Eighties.vim
     curl -fsLo "$HOME/.config/nvim/init.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/init.vim
@@ -196,16 +206,16 @@ function install_neovim() {
 function install_ruby() {
     if ! [ -x "$(command -v ruby)" ]; then
         echo -e "\\e[32m[ ruby ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y ruby ruby-dev >/dev/null 2>&1 && echo "Ruby başarıyla yüklendi" || echo "Ruby yükleme başarısız"
+        pkg install -y ruby ruby-dev  2>&1 && echo "Ruby başarıyla yüklendi" || echo "Ruby yükleme başarısız"
     fi
     echo -e "\\e[32m[ ruby ]\\e[m pry yükleniyor"
-    gem install pry >/dev/null 2>&1
+    gem install pry  2>&1
 }
 
 function install_tmux() {
     if ! [ -x "$(command -v tmux)" ]; then
         echo -e "\\e[32m[ tmux ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y tmux >/dev/null 2>&1
+        pkg install -y tmux  2>&1
     fi
     curl -fsLo "$HOME/.tmux.conf" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.tmux.conf
 }
@@ -213,26 +223,33 @@ function install_tmux() {
 function install_python() {
     if ! [ -x "$(command -v python)" ]; then
         echo -e "\\e[32m[ python ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y python python-dev >/dev/null 2>&1 && echo "Python başarıyla yüklendi" || echo "Python yükleme başarısız"
+        pkg install -y python  2>&1 && echo "Python başarıyla yüklendi" || echo "Python yükleme başarısız"
     fi
     curl -fsLo "$HOME/.pythonrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.pythonrc
 }
 
 function install_php() {
     echo -e "\\e[32m[ php ]\\e[m bulunamadı, yükleniyor"
-    pkg install -y nginx php php-fpm >/dev/null 2>&1 && echo "PHP ve Nginx başarıyla yüklendi" || echo "PHP ve Nginx yükleme başarısız"
+    pkg install -y nginx php php-fpm  2>&1 && echo "PHP ve Nginx başarıyla yüklendi" || echo "PHP ve Nginx yükleme başarısız"
 }
 
 function install_golang() {
     echo -e "\\e[32m[ go ]\\e[m bulunamadı, yükleniyor"
-    pkg install -y golang >/dev/null 2>&1 && echo "Go başarıyla yüklendi" || echo "Go yükleme başarısız"
-    # Dizin zaten mevcutsa yeniden oluşturma
+    pkg install -y golang  2>&1 && echo "Go başarıyla yüklendi" || echo "Go yükleme başarısız"
+    
     if [ ! -d "$HOME/.go" ]; then
         mkdir $HOME/.go
     fi
 
-    echo 'export GOPATH="$HOME/.go"' >> $HOME/.profile
-    echo 'export PATH="$PATH:$HOME/.go/bin"' >> $HOME/.profile
+    # Go'nun PATH'e eklenmesi
+    if ! grep -q 'export GOPATH="$HOME/.go"' "$HOME/.profile"; then
+        echo 'export GOPATH="$HOME/.go"' >> "$HOME/.profile"
+    fi
+
+    if ! grep -q 'export PATH="$PATH:$HOME/.go/bin"' "$HOME/.profile"; then
+        echo 'export PATH="$PATH:$HOME/.go/bin"' >> "$HOME/.profile"
+        export PATH="$PATH:$HOME/.go/bin"
+    fi
 }
 
 function start() {
@@ -266,11 +283,19 @@ function start() {
 function finish() {
     termux-setup-storage
     touch "$HOME/.hushlogin"
-    if ! grep -q "source ~/.profile" $HOME/.bash_profile >/dev/null 2>&1; then
+    if ! grep -q "source ~/.profile" $HOME/.bash_profile  2>&1; then
         echo -e "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi" >> "$HOME/.bash_profile"
     fi
+
+    if [ -f "$HOME/.zshrc" ]; then
+        if ! grep -q "source ~/.profile" "$HOME/.zshrc"; then
+            echo 'if [ -f ~/.profile ]; then source ~/.profile; fi' >> "$HOME/.zshrc"
+        fi
+    fi
+    
     echo -e "\\e[32m[ tamamlandı ]\\e[m Ayarların uygulanması için lütfen Termux'u yeniden başlatın"
 }
+
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -363,7 +388,7 @@ fi
 if [ "$elixir" = true ]; then
     if ! [ -x "$(command -v erl)" ]; then
         echo -e "\\e[32m[ erlang ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y erlang >/dev/null 2>&1
+        pkg install -y erlang  2>&1
     fi
     if [ ! -d "$HOME/.elixir" ]; then
         echo -e "\\e[32m[ elixir ]\\e[m kuruluyor..."

@@ -8,9 +8,7 @@ nodejs=false
 tmux=false
 ruby=false
 php=false
-postgres=false
 zsh=false
-
 
 function show_usage() {
     echo -e "\\e[32mKullanım: install.sh [seçenekler]\\e[m"
@@ -23,7 +21,6 @@ function show_usage() {
     echo -e "  -t, --tmux          Tmux'u kur"
     echo -e "  -r, --ruby          Ruby'yi kur"
     echo -e "  --php               PHP'yi kur"
-    echo -e "  -pg, --postgres     PostgreSQL'i kur"
     echo -e "  -z, --zsh           Zsh'i kur"
     echo -e "  -a, --all           Tüm yazılımları kur"
     echo -e "\\e[31mÖrnek: ./install.sh --all\\e[m"
@@ -80,7 +77,7 @@ function install_zsh() {
     curl -fsLo "$HOME/.zshrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.zshrc
     curl -fsLo "$HOME/.profile" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.profile
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" ]; then
-        echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"f
+        echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" 
     fi
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" ]; then
@@ -115,7 +112,6 @@ function install_elixir() {
 
     cd "$HOME" || exit
 }
-
 
 function install_node() {
     if ! [ -x "$(command -v node)" ]; then
@@ -155,67 +151,6 @@ function install_requirements() {
         curl -fsLo "$HOME/.termux/font.ttf" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/font.ttf
     fi
 }
-
-function install_postgres() {
-  echo "PostgreSQL - install and configure"
-
-  # PostgreSQL kurulumu öncesi LANG ayarı kontrolü
-  if [ -z "$LANG" ]; then
-    echo "Dil ayarı eksik, C.UTF-8 ayarlanıyor..."
-    export LANG=C.UTF-8
-  fi
-
-  if [ -f $PREFIX/bin/pg_ctl ]; then
-    echo "* PostgreSQL zaten kurulu"
-  else
-    echo "* PostgreSQL - gerekli paketler yükleniyor"
-    pkg install -y postgresql postgis libiconv libxml2 libsqlite proj libgeos json-c libprotobuf-c gdal zstd zstd-static
-
-    echo "* PostgreSQL - yapılandırma yapılıyor"
-    mkdir -p $PREFIX/var/lib/postgresql
-    initdb -D $PREFIX/var/lib/postgresql
-    
-    # PostgreSQL yapılandırma dosyaları kontrol ve ekleme
-    if ! grep -q "listen_addresses = '*'" $PREFIX/var/lib/postgresql/postgresql.conf; then
-      echo "listen_addresses = '*'" >> $PREFIX/var/lib/postgresql/postgresql.conf
-    fi
-    if ! grep -q "host all all 0.0.0.0/0 md5" $PREFIX/var/lib/postgresql/pg_hba.conf; then
-      echo "host all all 0.0.0.0/0 md5" >> $PREFIX/var/lib/postgresql/pg_hba.conf
-    fi
-
-    echo "* PostgreSQL - sunucu başlatılıyor"
-    pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
-  fi
-
-  # Veritabanı oluşturma
-  echo "* PostgreSQL - 'gis' veritabanı oluşturuluyor"
-  if createdb gis; then
-    echo "* 'gis' veritabanı başarıyla oluşturuldu"
-  else
-    echo "* HATA: 'gis' veritabanı zaten mevcut"
-  fi
-
-  # Kullanıcı ve şifre oluşturma
-  echo "####################"
-  echo -n "Lütfen 'gis' kullanıcısı için bir şifre girin: "
-  read -s PASSWORD
-  echo ""
-
-  echo "* PostgreSQL - 'gis' kullanıcısı oluşturuluyor"
-  if psql -d gis -c "CREATE ROLE gis WITH SUPERUSER LOGIN PASSWORD '$PASSWORD'"; then
-    echo "* 'gis' rolü başarıyla oluşturuldu"
-  else
-    echo "* HATA: 'gis' rolü oluşturulamadı"
-  fi
-
-  # Servis yeniden başlatma
-  echo "* PostgreSQL - sunucu yeniden başlatılıyor"
-  pg_ctl -D $PREFIX/var/lib/postgresql stop
-  pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
-}
-
-
-
 
 function install_neovim() {
     if ! [ -x "$(command -v nvim)" ]; then
@@ -357,9 +292,6 @@ while [[ $# -gt 0 ]]; do
     --php)
         php=true
         ;;
-    -pg | --postgres)
-        postgres=true
-        ;;
     -z | --zsh)
         zsh=true
         ;;
@@ -372,7 +304,6 @@ while [[ $# -gt 0 ]]; do
         tmux=true
         ruby=true
         php=true
-        postgres=true
         zsh=true
         ;;
     *) echo -e "Bilinmeyen seçenek: $1" ;;
@@ -393,10 +324,6 @@ fi
 
 if [ "$nodejs" = true ]; then
     install_node
-fi
-
-if [ "$postgres" = true ]; then
-    install_postgres
 fi
 
 if [ "$nvimrc" = true ]; then

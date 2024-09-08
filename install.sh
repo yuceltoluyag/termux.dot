@@ -161,8 +161,11 @@ function install_postgres() {
         # PostgreSQL'in PATH'e eklenmesi
         if ! grep -q 'export PATH="$PREFIX/pgsql/bin:$PATH"' "$HOME/.profile"; then
             echo 'export PATH="$PREFIX/pgsql/bin:$PATH"' >> "$HOME/.profile"
-            export PATH="$PREFIX/pgsql/bin:$PATH"
         fi
+
+        # Mevcut oturum için PATH'i güncelle
+        export PATH="$PREFIX/pgsql/bin:$PATH"
+
         echo -e "\\e[32m[ postgres ]\\e[m bulunamadı, yükleniyor"
         pkg install -y postgresql 2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
         echo -e "\\e[32m[ postgres ]\\e[m yapılandırmalar oluşturuluyor"
@@ -170,6 +173,7 @@ function install_postgres() {
         initdb ~/.pg  2>&1
     fi
 
+    # PostgreSQL başlatma
     if ! pg_ctl -D ~/.pg status  2>&1; then
         echo -e "\\e[32m[ postgres ]\\e[m başlatılıyor..."
         pg_ctl -D ~/.pg start  2>&1
@@ -177,11 +181,13 @@ function install_postgres() {
         echo -e "\\e[32m[ postgres ]\\e[m zaten çalışıyor."
     fi
 
+    # Veritabanı oluşturma
     if ! createdb "$(whoami)"  2>&1; then
         echo -e "\\e[32m[ postgres ]\\e[m yeni veritabanı oluşturuluyor"
         createdb "$(whoami)"
     fi
 }
+
 
 function install_neovim() {
     if ! [ -x "$(command -v nvim)" ]; then

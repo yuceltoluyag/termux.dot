@@ -157,36 +157,53 @@ function install_requirements() {
 }
 
 function install_postgres() {
-    if ! [ -x "$(command -v pg_ctl)" ]; then
-        # PostgreSQL'in PATH'e eklenmesi
-        if ! grep -q 'export PATH="$PREFIX/pgsql/bin:$PATH"' "$HOME/.profile"; then
-            echo 'export PATH="$PREFIX/pgsql/bin:$PATH"' >> "$HOME/.profile"
-        fi
+  echo "PostgreSQL - install and configure"
 
-        # Mevcut oturum için PATH'i güncelle
-        export PATH="$PREFIX/pgsql/bin:$PATH"
+  if [ -f $PREFIX/bin/pg_ctl ]; then
+    echo "* PostgreSQL zaten kurulu"
+  else
+    echo "* PostgreSQL - gerekli paketler yükleniyor"
+    pkg install -y postgresql postgis libiconv libxml2 libsqlite proj libgeos json-c libprotobuf-c gdal zstd zstd-static
 
-        echo -e "\\e[32m[ postgres ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y postgresql 2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
-        echo -e "\\e[32m[ postgres ]\\e[m yapılandırmalar oluşturuluyor"
-        
-        initdb ~/.pg  2>&1
-    fi
+    echo "* PostgreSQL - yapılandırma yapılıyor"
+    mkdir -p $PREFIX/var/lib/postgresql
+    initdb -D $PREFIX/var/lib/postgresql
+    
+    # PostgreSQL yapılandırma dosyaları
+    echo "listen_addresses = '*'" >> $PREFIX/var/lib/postgresql/postgresql.conf
+    echo "host all all 0.0.0.0/0 md5" >> $PREFIX/var/lib/postgresql/pg_hba.conf
 
-    # PostgreSQL başlatma
-    if ! pg_ctl -D ~/.pg status  2>&1; then
-        echo -e "\\e[32m[ postgres ]\\e[m başlatılıyor..."
-        pg_ctl -D ~/.pg start  2>&1
-    else
-        echo -e "\\e[32m[ postgres ]\\e[m zaten çalışıyor."
-    fi
+    echo "* PostgreSQL - sunucu başlatılıyor"
+    pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
+  fi
 
-    # Veritabanı oluşturma
-    if ! createdb "$(whoami)"  2>&1; then
-        echo -e "\\e[32m[ postgres ]\\e[m yeni veritabanı oluşturuluyor"
-        createdb "$(whoami)"
-    fi
+  # Veritabanı oluşturma
+  echo "* PostgreSQL - 'gis' veritabanı oluşturuluyor"
+  if createdb gis; then
+    echo "* 'gis' veritabanı başarıyla oluşturuldu"
+  else
+    echo "* HATA: 'gis' veritabanı zaten mevcut"
+  fi
+
+  # Kullanıcı ve şifre oluşturma
+  echo "####################"
+  echo -n "Lütfen 'gis' kullanıcısı için bir şifre girin: "
+  read -s PASSWORD
+  echo ""
+
+  echo "* PostgreSQL - 'gis' kullanıcısı oluşturuluyor"
+  if psql -d gis -c "CREATE ROLE gis WITH SUPERUSER LOGIN PASSWORD '$PASSWORD'"; then
+    echo "* 'gis' rolü başarıyla oluşturuldu"
+  else
+    echo "* HATA: 'gis' rolü oluşturulamadı"
+  fi
+
+  # Servis yeniden başlatma
+  echo "* PostgreSQL - sunucu yeniden başlatılıyor"
+  pg_ctl -D $PREFIX/var/lib/postgresql stop
+  pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
 }
+
 
 
 function install_neovim() {

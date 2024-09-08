@@ -80,7 +80,7 @@ function install_zsh() {
     curl -fsLo "$HOME/.zshrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.zshrc
     curl -fsLo "$HOME/.profile" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.profile
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" ]; then
-        echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"
+        echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"f
         git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" 
     fi
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" ]; then
@@ -164,7 +164,7 @@ function install_postgres() {
             export PATH="$PREFIX/pgsql/bin:$PATH"
         fi
         echo -e "\\e[32m[ postgres ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y postgresql postgresql-dev  2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
+        pkg install -y postgresql 2>&1 && echo "PostgreSQL başarıyla yüklendi" || echo "PostgreSQL yükleme başarısız"
         echo -e "\\e[32m[ postgres ]\\e[m yapılandırmalar oluşturuluyor"
         
         initdb ~/.pg  2>&1
@@ -206,7 +206,7 @@ function install_neovim() {
 function install_ruby() {
     if ! [ -x "$(command -v ruby)" ]; then
         echo -e "\\e[32m[ ruby ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y ruby ruby-dev  2>&1 && echo "Ruby başarıyla yüklendi" || echo "Ruby yükleme başarısız"
+        pkg install -y ruby 2>&1 && echo "Ruby başarıyla yüklendi" || echo "Ruby yükleme başarısız"
     fi
     echo -e "\\e[32m[ ruby ]\\e[m pry yükleniyor"
     gem install pry  2>&1

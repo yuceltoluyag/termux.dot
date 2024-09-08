@@ -1,0 +1,241 @@
+# -*- coding: utf-8 -*-
+"""Startup script that adds niceties to the interactive interpreter."""
+
+def _pythonrc_enable_readline():
+    """Enable readline, tab completion, and history"""
+    import sys
+    try:
+        import readline
+        import rlcompleter
+    except ImportError:
+        sys.stderr.write('readline unavailable - tab completion disabled.\n')
+        return
+
+    old_complete = readline.get_completer()
+
+    def complete(text, state):
+        if not text:
+            # Insert four spaces for indentation
+            return ('    ', None)[state]
+        else:
+            return old_complete(text, state)
+    readline.parse_and_bind('tab: complete')
+    readline.set_completer(complete)
+
+def _pythonrc_enable_history():
+    import atexit
+    import os
+    try:
+        import readline
+    except ImportError:
+        return
+
+    if 'NOHIST' not in os.environ:
+        history_path = os.path.expanduser('~/.history/python')
+        has_written = [False]
+
+        def write_history():
+            if not has_written[0]:
+                readline.write_history_file(history_path)
+                has_written[0] = True
+        atexit.register(write_history)
+
+        if os.path.isfile(history_path):
+            try:
+                readline.read_history_file(history_path)
+            except IOError:
+                pass
+        readline.set_history_length(-1)
+
+def _pythonrc_enable_pprint():
+    """Enable pretty printing of evaluated expressions"""
+    import pprint
+    import sys
+    try:
+        from io import StringIO
+        from pygments import highlight
+        from pygments.lexers import PythonLexer, PythonTracebackLexer
+        from pygments.formatters import TerminalFormatter
+
+        def pphighlight(o, *a, **kw):
+            s = pprint.pformat(o, *a, **kw)
+            try:
+                sys.stdout.write(
+                    highlight(s, PythonLexer(), TerminalFormatter()))
+            except UnicodeError:
+                sys.stdout.write(s)
+                sys.stdout.write('\n')
+
+        _old_excepthook = sys.excepthook
+
+        def excepthook(exctype, value, traceback):
+            """Prints exceptions to sys.stderr and colorizes them"""
+            old_stderr = sys.stderr
+            sys.stderr = StringIO()
+            try:
+                _old_excepthook(exctype, value, traceback)
+                s = sys.stderr.getvalue()
+                try:
+                    s = highlight(
+                        s, PythonTracebackLexer(), TerminalFormatter())
+                except UnicodeError:
+                    pass
+                old_stderr.write(s)
+            finally:
+                sys.stderr = old_stderr
+
+        sys.excepthook = excepthook
+    except ImportError:
+        pphighlight = pprint.pprint
+
+    import builtins as __builtin__
+    import inspect
+    import pydoc
+    import sys
+    import types
+
+    help_types = (types.BuiltinFunctionType, types.BuiltinMethodType,
+                  types.FunctionType, types.MethodType, types.ModuleType, type)
+
+    def get_width():
+        """Returns terminal width"""
+        try:
+            import os
+            width = os.get_terminal_size().columns
+        except (ImportError, OSError):
+            width = 80
+        return width
+
+    if hasattr(inspect, 'getfullargspec'):
+        getargspec = inspect.getfullargspec
+    else:
+        getargspec = inspect.getargspec
+
+    def pprinthook(value):
+        """Pretty print an object to sys.stdout and also save it in
+        __builtin__.
+        """
+        if value is None:
+            return
+        __builtin__._ = value
+
+        if isinstance(value, help_types):
+            reprstr = repr(value)
+            try:
+                if inspect.isfunction(value):
+                    parts = reprstr.split(' ')
+                    parts[1] += inspect.formatargspec(*getargspec(value))
+                    reprstr = ' '.join(parts)
+                elif inspect.ismethod(value):
+                    parts = reprstr[:-1].split(' ')
+                    parts[2] += inspect.formatargspec(*getargspec(value))
+                    reprstr = ' '.join(parts) + '>'
+            except TypeError:
+                pass
+            sys.stdout.write(reprstr)
+            sys.stdout.write('\n')
+            if getattr(value, '__doc__', None):
+                sys.stdout.write('\n')
+                sys.stdout.write(pydoc.getdoc(value))
+                sys.stdout.write('\n')
+        else:
+            pphighlight(value, width=get_width())
+
+    sys.displayhook = pprinthook
+
+def _pythonrc_fix_linecache():
+    """Add source(obj) that shows the source code for a given object"""
+    import os
+    import sys
+    from linecache import cache
+
+    def updatecache(filename, module_globals=None):
+        """Update a cache entry and return its list of lines."""
+        if filename in cache:
+            del cache[filename]
+        if not filename or filename[0] + filename[-1] == '<>':
+            return []
+
+        fullname = filename
+        try:
+            stat = os.stat(fullname)
+        except os.error:
+            basename = os.path.split(filename)[1]
+
+            if module_globals and '__loader__' in module_globals:
+                name = module_globals.get('__name__')
+                loader = module_globals['__loader__']
+                get_source = getattr(loader, 'get_source', None)
+
+                if name and get_source:
+                    try:
+                        data = get_source(name)
+                    except (ImportError, IOError):
+                        pass
+                    else:
+                        if data is None:
+                            return []
+                        cache[filename] = (
+                            len(data), None,
+                            [line + '\n' for line in data.splitlines()],
+                            fullname
+                        )
+                        return cache[filename][2]
+
+            for dirname in sys.path:
+                try:
+                    fullname = os.path.join(dirname, basename)
+                except (TypeError, AttributeError):
+                    pass
+                else:
+                    try:
+                        stat = os.stat(fullname)
+                        break
+                    except os.error:
+                        pass
+            else:
+                return []
+        try:
+            with open(fullname, 'r', encoding='utf-8') as fp:
+                lines = fp.readlines()
+        except IOError:
+            return []
+        size, mtime = stat.st_size, stat.st_mtime
+        cache[filename] = size, mtime, lines, fullname
+        return lines
+
+    import linecache
+    linecache.updatecache = updatecache
+
+def source(obj):
+    """Display the source code of an object."""
+    import sys
+    from inspect import getsource
+    from pydoc import pager
+
+    try:
+        s = getsource(obj)
+    except TypeError:
+        sys.stderr.write("Source code unavailable (maybe it's part of "
+                         "a C extension?)\n")
+        return
+
+    try:
+        from pygments import highlight
+        from pygments.lexers import PythonLexer
+        from pygments.formatters import TerminalFormatter
+        s = highlight(s, PythonLexer(), TerminalFormatter())
+    except (ImportError, UnicodeError):
+        pass
+
+    pager(s)
+
+if __name__ == '__main__':
+    import sys
+    sys.ps1 = "\001\033[0;32m\002>>> \001\033[1;37m\002"
+    sys.ps2 = "\001\033[1;31m\002... \001\033[1;37m\002"
+
+    _pythonrc_enable_readline()
+    _pythonrc_enable_history()
+    _pythonrc_enable_pprint()
+    _pythonrc_fix_linecache()

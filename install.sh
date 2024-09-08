@@ -159,6 +159,12 @@ function install_requirements() {
 function install_postgres() {
   echo "PostgreSQL - install and configure"
 
+  # PostgreSQL kurulumu öncesi LANG ayarı kontrolü
+  if [ -z "$LANG" ]; then
+    echo "Dil ayarı eksik, C.UTF-8 ayarlanıyor..."
+    export LANG=C.UTF-8
+  fi
+
   if [ -f $PREFIX/bin/pg_ctl ]; then
     echo "* PostgreSQL zaten kurulu"
   else
@@ -169,9 +175,13 @@ function install_postgres() {
     mkdir -p $PREFIX/var/lib/postgresql
     initdb -D $PREFIX/var/lib/postgresql
     
-    # PostgreSQL yapılandırma dosyaları
-    echo "listen_addresses = '*'" >> $PREFIX/var/lib/postgresql/postgresql.conf
-    echo "host all all 0.0.0.0/0 md5" >> $PREFIX/var/lib/postgresql/pg_hba.conf
+    # PostgreSQL yapılandırma dosyaları kontrol ve ekleme
+    if ! grep -q "listen_addresses = '*'" $PREFIX/var/lib/postgresql/postgresql.conf; then
+      echo "listen_addresses = '*'" >> $PREFIX/var/lib/postgresql/postgresql.conf
+    fi
+    if ! grep -q "host all all 0.0.0.0/0 md5" $PREFIX/var/lib/postgresql/pg_hba.conf; then
+      echo "host all all 0.0.0.0/0 md5" >> $PREFIX/var/lib/postgresql/pg_hba.conf
+    fi
 
     echo "* PostgreSQL - sunucu başlatılıyor"
     pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
@@ -203,6 +213,7 @@ function install_postgres() {
   pg_ctl -D $PREFIX/var/lib/postgresql stop
   pg_ctl -D $PREFIX/var/lib/postgresql -l $PREFIX/var/lib/postgresql/pg.log start
 }
+
 
 
 

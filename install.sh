@@ -63,6 +63,7 @@ declare -A MESSAGES_EN=(
     ["install_nano"]="Nano not found, installing..."
     ["warning_restart"]="Please restart the session for the changes to take effect."
     ["install_nerd_font"]="Nerd fonts not found, installing..."
+    ["select_option"]="Please select an option from the list:"
 )
 
 declare -A MESSAGES_TR=(
@@ -104,6 +105,7 @@ declare -A MESSAGES_TR=(
     ["install_nano"]="Nano bulunamadı, yükleniyor..."
     ["warning_restart"]="Değişikliklerin etkili olması için oturumu yeniden başlatın."
     ["install_nerd_font"]="Nerd fontları bulunamadı, yükleniyor..."
+    ["select_option"]="Listeden bir seçenek seçiniz:"
 )
 
 function get_message() {
@@ -135,7 +137,15 @@ function show_usage() {
 
 if [ $# -eq 0 ]; then
     show_usage
-    exit 1
+    while true; do
+        read -p "$(get_message 'select_option') " user_option
+        if [[ "$user_option" =~ ^(-e|--elixir|-g|--go|--golang|-p|--python|-n|--nvim|--neovim|-js|--nodejs|-t|--tmux|-r|--ruby|--php|-z|--zsh|-a|--all)$ ]]; then
+            set -- "$user_option"
+            break
+        else
+            printf "\\e[31m%s\\e[m\\n" "$(get_message 'unknown_option') $user_option"
+        fi
+    done
 fi
 
 function check_root() {
@@ -318,7 +328,6 @@ function install_requirements() {
     fi
 }
 
-
 function install_neovim() {
     install_package_if_needed neovim
 
@@ -339,7 +348,6 @@ function install_neovim() {
     rm -rf ~/.config/nvim/.git
 }
 
-
 function install_nerd_font() {
     if ! [ -x "$(command -v termux-nerd-installer)" ]; then
         printf "\\e[32m[ termux-nerd-installer ]\\e[m %s\\n" "$(get_message install_nerd_font)"
@@ -357,7 +365,6 @@ function install_nerd_font() {
     termux-nerd-installer list available
 }
 
-
 function install_ruby() {
     install_package_if_needed ruby
 
@@ -365,14 +372,12 @@ function install_ruby() {
     gem install pry 2>&1
 }
 
-
 function install_tmux() {
     install_package_if_needed tmux
     
     printf "\\e[32m[ Tmux ]\\e[m %s\\n" "$(get_message install_neovim)"
     curl -fsLo "$HOME/.tmux.conf" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.tmux.conf
 }
-
 
 function install_python() {
     install_package_if_needed python
@@ -385,7 +390,6 @@ function install_php() {
     install_package_if_needed php
     install_package_if_needed php-fpm
 }
-
 
 function install_golang() {
     install_package_if_needed golang
@@ -434,7 +438,12 @@ function start() {
 function finish() {
     touch "$HOME/.hushlogin"
 
-    if ! grep -q "source ~/.profile" "$HOME/.bash_profile" 2>&1; then
+    if [ -f "$HOME/.bash_profile" ]; then
+        if ! grep -q "source ~/.profile" "$HOME/.bash_profile" 2>&1; then
+            printf "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi\n" >> "$HOME/.bash_profile"
+        fi
+    else
+        touch "$HOME/.bash_profile"
         printf "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi\n" >> "$HOME/.bash_profile"
     fi
 

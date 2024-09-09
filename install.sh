@@ -9,6 +9,7 @@ tmux=false
 ruby=false
 php=false
 zsh=false
+install_nerd_font=true
 
 function show_usage() {
     echo -e "\\e[32mKullanım: install.sh [seçenekler]\\e[m"
@@ -59,10 +60,11 @@ function check_storage_permission() {
             echo -e "\\e[33m[ UYARI ]\\e[m Depolama yapısı yeniden oluşturulmadı. Devam ediliyor..."
         fi
     else
-        termux-setup-storage
         echo -e "\\e[32m[ Depolama ]\\e[m Depolama izni verilmiş."
+        termux-setup-storage
     fi
 }
+
 
 function install_zsh() {
     if ! [ -x "$(command -v zsh)" ]; then
@@ -86,7 +88,9 @@ function install_zsh() {
     fi
 
     chsh -s zsh
+    echo -e "\\e[32m[ Zsh ]\\e[m Kurulum tamamlandı. Değişikliklerin etkili olabilmesi için kurulumdan sonra Termux'u yeniden başlatın."
 }
+
 
 function install_elixir() {
     # unzip kurulu değilse yükle
@@ -106,18 +110,19 @@ function install_elixir() {
 
     # Elixir'in PATH'e eklenmesi
     if ! grep -q 'export PATH="$PATH:$HOME/.elixir/bin"' "$HOME/.profile"; then
-        echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
-        export PATH="$PATH:$HOME/.elixir/bin"
+    echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
     fi
-
+    export PATH="$PATH:$HOME/.elixir/bin"  # Her durumda çalıştırılır
     cd "$HOME" || exit
 }
 
 function install_node() {
     if ! [ -x "$(command -v node)" ]; then
-        echo -e "\\e[32m[ nodejs ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y nodejs  2>&1 && echo "Node.js başarıyla yüklendi" || echo "Node.js yükleme başarısız"
-
+        echo -e "\\e[32m[ nodejs-lts ]\\e[m bulunamadı, yükleniyor"
+        pkg install -y nodejs-lts  2>&1 && echo "Node.js başarıyla yüklendi" || echo "Node.js yükleme başarısız"
+        npm config set python python3
+        node -v
+        npm -v
     fi
     echo -e "\\e[32m[ npm ]\\e[m önek yapılandırılıyor"
     mkdir -p "$HOME/.npm-packages"
@@ -135,42 +140,102 @@ function install_node() {
     $HOME/.yarn/bin/yarn config set prefix "$HOME/.npm-packages"  2>&1
 }
 
-function install_requirements() {
-    if ! [ -x "$(command -v git)" ]; then
-        echo -e "\\e[32m[ git ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y git  2>&1
-    fi
 
+function install_requirements() {
+    # Gerekli paketlerin listesi
+    required_packages=(
+        git
+        curl
+        wget
+        nano
+        vim
+        zip
+        unzip
+        nmap
+        openssh
+        tmux
+        ffmpeg
+        imagemagick
+        build-essential
+        binutils
+        pkg-config
+        python3
+        cmatrix
+        figlet
+        cowsay
+        toilet
+        lolcat
+        net-tools
+        w3m
+    )
+    
+    # Paketlerin kurulumu
+    echo -e "\\e[32m[ Paketler ]\\e[m Güncellemeler yapılıyor..."
+    pkg update -y && pkg upgrade -y
+
+    echo -e "\\e[32m[ Gerekli paketler ]\\e[m Kuruluyor..."
+    for package in "${required_packages[@]}"; do
+        if ! [ -x "$(command -v $package)" ]; then
+            echo -e "\\e[32m[ $package ]\\e[m bulunamadı, yükleniyor"
+            pkg install -y "$package" 2>&1 && echo "$package başarıyla yüklendi" || echo "$package yükleme başarısız"
+        else
+            echo -e "\\e[32m[ $package ]\\e[m zaten kurulu"
+        fi
+    done
+
+    # Ek dizin oluşturma ve profil yapılandırması
     if [ ! -d "$HOME/.local/bin" ]; then
         mkdir -p "$HOME/.local/bin"
-        echo 'export PATH="$PATH:$HOME/.local/bin"' >> $HOME/.profile
+        echo 'export PATH="$PATH:$HOME/.local/bin"' >> "$HOME/.profile"
     fi
 
     if [ ! -d "$HOME/.termux" ]; then
         curl -fsLo "$HOME/.termux/colors.properties" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/colors.properties
-        curl -fsLo "$HOME/.termux/font.ttf" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/font.ttf
     fi
 }
+
 
 function install_neovim() {
     if ! [ -x "$(command -v nvim)" ]; then
         echo -e "\\e[32m[ neovim ]\\e[m bulunamadı, yükleniyor"
         pkg install -y neovim  2>&1 && echo "Neovim başarıyla yüklendi" || echo "Neovim yükleme başarısız"
+    fi
+    
+    if [ -d "$HOME/.config/nvim" ]; then
+        echo -e "\\e[32m[ Neovim ]\\e[m önceki ayarlar temizleniyor..."
+        rm -rf "$HOME/.config/nvim"
+    fi
+    if [ -d "$HOME/.local/state/nvim" ]; then
+        rm -rf "$HOME/.local/state/nvim"
+    fi
+    if [ -d "$HOME/.local/share/nvim" ]; then
+        rm -rf "$HOME/.local/share/nvim"
+    fi
 
-    fi
-    if ! [ -x "$(command -v clang)" ]; then
-        echo -e "\\e[32m[ neovim ]\\e[m clang bulunamadı, yükleniyor"
-        pkg install -y clang libcrypt-dev  2>&1 && echo "Clang başarıyla yüklendi" || echo "Clang yükleme başarısız"
-    fi
-    if ! [ -x "$(command -v python)" ]; then
-        echo -e "\\e[32m[ neovim ]\\e[m python bulunamadı, yükleniyor"
-        pkg install -y python  2>&1
-    fi
-    pip3 install neovim  2>&1
-    curl -fsLo "$HOME/.config/nvim/autoload/plug.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/autoload/plug.vim
-    curl -fsLo "$HOME/.config/nvim/colors/Tomorrow-Night-Eighties.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/colors/Tomorrow-Night-Eighties.vim
-    curl -fsLo "$HOME/.config/nvim/init.vim" --create-dirs https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/nvim/init.vim
+    # NvChad kurulumu
+    echo -e "\\e[32m[ NvChad ]\\e[m kuruluyor..."
+    git clone https://github.com/NvChad/starter ~/.config/nvim
+    
+    rm -rf ~/.config/nvim/.git
 }
+
+
+function install_nerd_font(){
+    if ! [ -x "$(command -v termux-nerd-installer)" ]; then
+        git clone https://github.com/notflawffles/termux-nerd-installer.git
+        cd termux-nerd-installer || exit 1  
+        make install
+        cd ..  
+        rm -rf termux-nerd-installer  
+    else
+        echo -e "\\e[32m[ termux-nerd-installer ]\\e[m zaten kurulu"
+    fi
+
+    termux-nerd-installer install fira-code
+    termux-nerd-installer set fira-code
+    termux-nerd-installer list available
+}
+
 
 function install_ruby() {
     if ! [ -x "$(command -v ruby)" ]; then
@@ -206,9 +271,7 @@ function install_golang() {
     echo -e "\\e[32m[ go ]\\e[m bulunamadı, yükleniyor"
     pkg install -y golang  2>&1 && echo "Go başarıyla yüklendi" || echo "Go yükleme başarısız"
     
-    if [ ! -d "$HOME/.go" ]; then
-        mkdir $HOME/.go
-    fi
+    mkdir -p "$HOME/.go"
 
     # Go'nun PATH'e eklenmesi
     if ! grep -q 'export GOPATH="$HOME/.go"' "$HOME/.profile"; then
@@ -217,8 +280,8 @@ function install_golang() {
 
     if ! grep -q 'export PATH="$PATH:$HOME/.go/bin"' "$HOME/.profile"; then
         echo 'export PATH="$PATH:$HOME/.go/bin"' >> "$HOME/.profile"
-        export PATH="$PATH:$HOME/.go/bin"
     fi
+    export PATH="$PATH:$HOME/.go/bin"  # Her durumda çalıştırılır
 }
 
 function start() {
@@ -250,7 +313,6 @@ function start() {
 }
 
 function finish() {
-    termux-setup-storage
     touch "$HOME/.hushlogin"
     if ! grep -q "source ~/.profile" $HOME/.bash_profile  2>&1; then
         echo -e "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi" >> "$HOME/.bash_profile"
@@ -328,7 +390,9 @@ fi
 
 if [ "$nvimrc" = true ]; then
     install_neovim
+    install_nerd_font
 fi
+
 
 if [ "$tmux" = true ]; then
     install_tmux

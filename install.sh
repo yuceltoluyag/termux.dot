@@ -25,6 +25,8 @@ function select_language() {
 }
 
 declare -A MESSAGES_EN=(
+    ["warning"]="[ WARNING ]"
+    ["install_warning"]="Some tasks may fail without root privileges."
     ["usage"]="Usage: install.sh [options]"
     ["available_options"]="Available options:"
     ["install_elixir"]="Install Elixir"
@@ -34,6 +36,9 @@ declare -A MESSAGES_EN=(
     ["install_nodejs"]="Install Node.js"
     ["install_tmux"]="Install Tmux"
     ["install_ruby"]="Install Ruby"
+    ["install_lolcat"]="Lolcat not found, installing..."
+    ["install_pry"]="Pry not found, installing..."
+    ["already_installed"]="Already installed."
     ["install_php"]="Install PHP"
     ["install_erlang"]="Erlang not found, installing..."
     ["install_zsh"]="Install Zsh"
@@ -67,6 +72,8 @@ declare -A MESSAGES_EN=(
 )
 
 declare -A MESSAGES_TR=(
+    ["warning"]="[ UYARI ]"
+    ["install_warning"]="Root izni olmadan bazı işlemler başarısız olabilir."
     ["usage"]="Kullanım: install.sh [seçenekler]"
     ["available_options"]="Kullanılabilir seçenekler:"
     ["install_elixir"]="Elixir'i kur"
@@ -76,6 +83,9 @@ declare -A MESSAGES_TR=(
     ["install_nodejs"]="Node.js'i kur"
     ["install_tmux"]="Tmux'u kur"
     ["install_ruby"]="Ruby'yi kur"
+    ["install_lolcat"]="Lolcat bulunamadı, yükleniyor..."
+    ["install_pry"]="Pry bulunamadı, yükleniyor..."
+    ["already_installed"]="Zaten yüklü."
     ["install_php"]="PHP'yi kur"
     ["install_erlang"]="Erlang bulunamadı, yükleniyor..."
     ["install_zsh"]="Zsh'i kur"
@@ -113,6 +123,7 @@ function get_message() {
     local context=$2
     if [ "$LANG" == "en" ]; then
         if [ "$context" == "menu" ]; then
+            # Menü için sadece kısa tanım mesajları
             case $key in
                 install_elixir) echo "Elixir" ;;
                 install_python) echo "Python" ;;
@@ -127,10 +138,12 @@ function get_message() {
                 *) echo "${MESSAGES_EN[$key]}" ;;
             esac
         else
+            # Kurulum sırasında gösterilecek mesajlar
             echo "${MESSAGES_EN[$key]}"
         fi
     else
         if [ "$context" == "menu" ]; then
+            # Menü için sadece kısa tanım mesajları (Türkçe)
             case $key in
                 install_elixir) echo "Elixir" ;;
                 install_python) echo "Python" ;;
@@ -145,6 +158,7 @@ function get_message() {
                 *) echo "${MESSAGES_TR[$key]}" ;;
             esac
         else
+            # Kurulum sırasında gösterilecek mesajlar
             echo "${MESSAGES_TR[$key]}"
         fi
     fi
@@ -184,31 +198,31 @@ fi
 
 function check_root() {
     if [ "$EUID" -ne 0 ]; then
-        printf "\\e[31m[ UYARI ]\\e[m %s\\n" "$(get_message root_warning)"
-        read -p "$(get_message continue_prompt)" -n 1 -r
+        printf "\\e[31m%s\\e[m %s\\n" "$(get_message 'warning')" "$(get_message 'install_warning')"
+        read -p "$(get_message 'continue_prompt')" -n 1 -r
         echo    
         if [[ ! $REPLY =~ ^[YyEe]$ ]]; then
-            printf "%s\\n" "$(get_message installation_canceled)"
+            printf "%s\\n" "$(get_message 'installation_cancelled')"
             exit 1
         fi
     else
-        printf "\\e[32m[ Root ]\\e[m %s\\n" "$(get_message root_detected)"
+        printf "\\e[32m[ Root ]\\e[m %s\\n" "$(get_message 'root_detected')"
     fi
 }
 
 function check_storage_permission() {
     if [ -d "$HOME/storage" ]; then
-        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_exists)"
-        read -p "$(get_message storage_prompt)" -n 1 -r
+        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message 'storage_granted')" "$(get_message 'storage_exists')"
+        read -p "$(get_message 'storage_prompt')" -n 1 -r
         echo   
         if [[ $REPLY =~ ^[YyEe]$ ]]; then
             termux-setup-storage
-            printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_setup)"
+            printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message 'storage_granted')" "$(get_message 'storage_setup')"
         else
-            printf "\\e[33m[ %s ]\\e[m %s\\n" "UYARI" "$(get_message storage_not_reset)"
+            printf "\\e[33m%s\\e[m %s\\n" "$(get_message 'warning')" "$(get_message 'storage_warning')"
         fi
     else
-        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_setup)"
+        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message 'storage_granted')" "$(get_message 'storage_setup')"
         termux-setup-storage
     fi
 }
@@ -263,7 +277,6 @@ function install_elixir() {
 function install_node() {
     install_package_if_needed nodejs-lts
 
-    npm config set python python3
     node -v
     npm -v
 
@@ -308,8 +321,8 @@ function install_package_if_needed() {
     
     if ! [ -x "$(command -v $package_name)" ]; then
         printf "\\e[32m[ %s ]\\e[m %s\\n" "$package_name" "$(get_message_safe $message_key)"
-        if pkg install -y "$package_name" 2>&1; then
-            printf "\\e[32m%s\\n" "$(get_message install_completed)"
+        if pkg install -y "$package_name" > /dev/null 2>&1; then
+        printf "\\e[32m%s\\n" "$(get_message install_completed)"
         else
             printf "\\e[31m%s\\n" "$(get_message installation_failed)" >&2
         fi
@@ -324,7 +337,7 @@ function install_requirements() {
         nano
         vim
         clang
-        libcrypt-dev
+        libcrypt
         zip
         unzip
         nmap
@@ -402,9 +415,30 @@ function install_nerd_font() {
 function install_ruby() {
     install_package_if_needed ruby
 
-    printf "\\e[32m[ Ruby ]\\e[m %s\\n" "$(get_message install_python)"
-    gem install pry 2>&1
+    printf "\\e[32m[ Ruby ]\\e[m %s\\n" "$(get_message install_ruby)"
+    if ! gem list -i lolcat > /dev/null 2>&1; then
+        printf "\\e[32m[ lolcat ]\\e[m %s\\n" "$(get_message 'install_lolcat')"
+        if gem install lolcat 2>&1; then
+            printf "\\e[32m%s\\e[m\\n" "$(get_message 'install_completed')"
+        else
+            printf "\\e[31m%s\\e[m\\n" "$(get_message 'installation_failed')"
+        fi
+    else
+        printf "\\e[32m[ lolcat ]\\e[m %s\\n" "$(get_message 'already_installed')"
+    fi
+
+    if ! gem list -i pry > /dev/null 2>&1; then
+        printf "\\e[32m[ pry ]\\e[m %s\\n" "$(get_message 'install_pry')"
+        if gem install pry 2>&1; then
+            printf "\\e[32m%s\\e[m\\n" "$(get_message 'install_completed')"
+        else
+            printf "\\e[31m%s\\e[m\\n" "$(get_message 'installation_failed')"
+        fi
+    else
+        printf "\\e[32m[ pry ]\\e[m %s\\n" "$(get_message 'already_installed')"
+    fi
 }
+
 
 function install_tmux() {
     install_package_if_needed tmux

@@ -1,3 +1,5 @@
+[English version](./README-en.md)
+
 # Termux Installation Script
 
 Bu betik, Termux üzerinde çeşitli yazılımların otomatik olarak yüklenmesi ve yapılandırılması için hazırlanmıştır. Aşağıda desteklenen yazılımlar ve kullanım talimatları bulunmaktadır.
@@ -14,20 +16,20 @@ Bu betik, Termux üzerinde çeşitli yazılımların otomatik olarak yüklenmesi
 - **PHP**
 - **Zsh** (Oh-My-Zsh ile birlikte)
 - **Clang ve Geliştirme Araçları**
-- **Çeşitli araçlar**: curl, wget, git, vim, nano, ffmpeg, imagemagick, zip, unzip, cmatrix, figlet, cowsay, toilet, lolcat, ve daha fazlası.
+- **Çeşitli araçlar**: curl, wget, git, vim, nano, ffmpeg, imagemagick, zip, unzip, cmatrix, figlet, cowsay, toilet, lolcat ve daha fazlası.
 
-## Kurulum
+## Kurulum Talimatları
 
 Bu betiği çalıştırmak için önce Termux uygulamasını yükleyin ve ardından aşağıdaki adımları takip edin:
 
-### 1. Betiği klonlayın veya indirin
+### 1. Depoyu klonlayın veya betiği indirin
 
 ```bash
 git clone https://github.com/yuceltoluyag/termux.dot.git
-cd termux-termux.dot
+cd termux.dot
 ```
 
-### 2. Betiği çalıştırma izni verin
+### 2. Betiği çalıştırılabilir hale getirin
 
 ```bash
 chmod +x install.sh
@@ -67,7 +69,7 @@ exit
 
 ## Gerekli Bağımlılıklar
 
-Bu betik aşağıdaki bağımlılıkları kontrol eder ve eksik olanları yükler:
+Bu betik, aşağıdaki bağımlılıkları kontrol eder ve eksik olanları yükler:
 
 - `git`
 - `curl`

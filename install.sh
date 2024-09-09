@@ -11,7 +11,6 @@ php=false
 zsh=false
 install_nerd_font=true
 
-# Dil seçimi
 function select_language() {
     echo "Select language / Dil seçiniz: "
     echo "1) English"
@@ -25,7 +24,6 @@ function select_language() {
     fi
 }
 
-# Mesajları saklayan bir yapı (sözlük benzeri)
 declare -A MESSAGES_EN=(
     ["usage"]="Usage: install.sh [options]"
     ["available_options"]="Available options:"
@@ -108,7 +106,6 @@ declare -A MESSAGES_TR=(
     ["install_nerd_font"]="Nerd fontları bulunamadı, yükleniyor..."
 )
 
-# Mesajları dil seçimine göre getiren fonksiyon
 function get_message() {
     local key=$1
     if [ "$LANG" == "en" ]; then
@@ -118,7 +115,6 @@ function get_message() {
     fi
 }
 
-# Dil seçimini yap
 select_language
 
 function show_usage() {

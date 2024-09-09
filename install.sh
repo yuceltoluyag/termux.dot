@@ -110,28 +110,62 @@ declare -A MESSAGES_TR=(
 
 function get_message() {
     local key=$1
+    local context=$2
     if [ "$LANG" == "en" ]; then
-        echo "${MESSAGES_EN[$key]}"
+        if [ "$context" == "menu" ]; then
+            case $key in
+                install_elixir) echo "Elixir" ;;
+                install_python) echo "Python" ;;
+                install_golang) echo "Go" ;;
+                install_neovim) echo "Neovim" ;;
+                install_nodejs) echo "Node.js" ;;
+                install_tmux) echo "Tmux" ;;
+                install_ruby) echo "Ruby" ;;
+                install_php) echo "PHP" ;;
+                install_zsh) echo "Zsh" ;;
+                install_all) echo "All Software" ;;
+                *) echo "${MESSAGES_EN[$key]}" ;;
+            esac
+        else
+            echo "${MESSAGES_EN[$key]}"
+        fi
     else
-        echo "${MESSAGES_TR[$key]}"
+        if [ "$context" == "menu" ]; then
+            case $key in
+                install_elixir) echo "Elixir" ;;
+                install_python) echo "Python" ;;
+                install_golang) echo "Go" ;;
+                install_neovim) echo "Neovim" ;;
+                install_nodejs) echo "Node.js" ;;
+                install_tmux) echo "Tmux" ;;
+                install_ruby) echo "Ruby" ;;
+                install_php) echo "PHP" ;;
+                install_zsh) echo "Zsh" ;;
+                install_all) echo "Tüm Yazılımlar" ;;
+                *) echo "${MESSAGES_TR[$key]}" ;;
+            esac
+        else
+            echo "${MESSAGES_TR[$key]}"
+        fi
     fi
 }
+
 
 select_language
 
 function show_usage() {
     echo -e "\\e[32m$(get_message usage)\\e[m"
     echo -e "$(get_message available_options)"
-    echo -e "  -e, --elixir        $(get_message install_elixir)"
-    echo -e "  -g, --go, --golang  $(get_message install_golang)"
-    echo -e "  -p, --python        $(get_message install_python)"
-    echo -e "  -n, --nvim, --neovim $(get_message install_neovim)"
-    echo -e "  -js, --nodejs       $(get_message install_nodejs)"
-    echo -e "  -t, --tmux          $(get_message install_tmux)"
-    echo -e "  -r, --ruby          $(get_message install_ruby)"
-    echo -e "  --php               $(get_message install_php)"
-    echo -e "  -z, --zsh           $(get_message install_zsh)"
-    echo -e "  -a, --all           $(get_message install_all)"
+    echo -e "  -e, --elixir        $(get_message install_elixir menu)"
+    echo -e "  -g, --go, --golang  $(get_message install_golang menu)"
+    echo -e "  -p, --python        $(get_message install_python menu)"
+    echo -e "  -n, --nvim, --neovim $(get_message install_neovim menu)"
+    echo -e "  -js, --nodejs       $(get_message install_nodejs menu)"
+    echo -e "  -t, --tmux          $(get_message install_tmux menu)"
+    echo -e "  -r, --ruby          $(get_message install_ruby menu)"
+    echo -e "  --php               $(get_message install_php menu)"
+    echo -e "  -z, --zsh           $(get_message install_zsh menu)"
+    echo -e "  -a, --all           $(get_message install_all menu)"
     echo -e "\\e[31m$(get_message example)\\e[m"
 }
 

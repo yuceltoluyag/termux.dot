@@ -149,6 +149,8 @@ function install_requirements() {
         wget
         nano
         vim
+        clang
+        libcrypt-dev
         zip
         unzip
         nmap

@@ -123,7 +123,6 @@ function get_message() {
     local context=$2
     if [ "$LANG" == "en" ]; then
         if [ "$context" == "menu" ]; then
-            # Menü için sadece kısa tanım mesajları
             case $key in
                 install_elixir) echo "Elixir" ;;
                 install_python) echo "Python" ;;
@@ -138,12 +137,10 @@ function get_message() {
                 *) echo "${MESSAGES_EN[$key]}" ;;
             esac
         else
-            # Kurulum sırasında gösterilecek mesajlar
             echo "${MESSAGES_EN[$key]}"
         fi
     else
         if [ "$context" == "menu" ]; then
-            # Menü için sadece kısa tanım mesajları (Türkçe)
             case $key in
                 install_elixir) echo "Elixir" ;;
                 install_python) echo "Python" ;;
@@ -158,7 +155,6 @@ function get_message() {
                 *) echo "${MESSAGES_TR[$key]}" ;;
             esac
         else
-            # Kurulum sırasında gösterilecek mesajlar
             echo "${MESSAGES_TR[$key]}"
         fi
     fi
@@ -353,7 +349,7 @@ function install_requirements() {
         figlet
         cowsay
         toilet
-        lolcat
+        gnupg
         net-tools
         w3m
     )

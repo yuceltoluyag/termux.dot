@@ -11,20 +11,130 @@ php=false
 zsh=false
 install_nerd_font=true
 
+# Dil seçimi
+function select_language() {
+    echo "Select language / Dil seçiniz: "
+    echo "1) English"
+    echo "2) Türkçe"
+    read -p "Choice (1 or 2): " lang_choice
+
+    if [[ "$lang_choice" == "1" ]]; then
+        LANG="en"
+    else
+        LANG="tr"
+    fi
+}
+
+# Mesajları saklayan bir yapı (sözlük benzeri)
+declare -A MESSAGES_EN=(
+    ["usage"]="Usage: install.sh [options]"
+    ["available_options"]="Available options:"
+    ["install_elixir"]="Install Elixir"
+    ["install_golang"]="Install Go"
+    ["install_python"]="Install Python"
+    ["install_neovim"]="Install Neovim"
+    ["install_nodejs"]="Install Node.js"
+    ["install_tmux"]="Install Tmux"
+    ["install_ruby"]="Install Ruby"
+    ["install_php"]="Install PHP"
+    ["install_erlang"]="Erlang not found, installing..."
+    ["install_zsh"]="Install Zsh"
+    ["install_all"]="Install all software"
+    ["example"]="Example: ./install.sh --all"
+    ["root_warning"]="No root privileges detected. Some tasks may fail without root."
+    ["continue_prompt"]="Do you want to continue? (y/n): "
+    ["installation_canceled"]="Installation canceled."
+    ["root_detected"]="Root access detected."
+    ["storage_exists"]="~/storage directory already exists."
+    ["storage_prompt"]="Would you like to recreate the storage structure? (This may overwrite existing data) (y/n): "
+    ["storage_setup"]="Setting up storage..."
+    ["storage_not_reset"]="Storage structure not reset. Continuing..."
+    ["storage_granted"]="Storage permission granted."
+    ["install_completed"]="Installation completed."
+    ["install_node"]="Node.js not found, installing..."
+    ["install_python"]="Python not found, installing..."
+    ["install_zsh"]="Zsh not found, installing..."
+    ["install_elixir"]="Elixir not found, installing..."
+    ["install_neovim"]="Neovim not found, installing..."
+    ["installation_failed"]="Installation failed."
+    ["installation_completed"]="Installation completed."
+    ["unknown_option"]="Unknown option: "
+    ["install_git"]="Git not found, installing..."
+    ["install_curl"]="Curl not found, installing..."
+    ["install_wget"]="Wget not found, installing..."
+    ["install_nano"]="Nano not found, installing..."
+    ["warning_restart"]="Please restart the session for the changes to take effect."
+    ["install_nerd_font"]="Nerd fonts not found, installing..."
+)
+
+declare -A MESSAGES_TR=(
+    ["usage"]="Kullanım: install.sh [seçenekler]"
+    ["available_options"]="Kullanılabilir seçenekler:"
+    ["install_elixir"]="Elixir'i kur"
+    ["install_golang"]="Go'yu kur"
+    ["install_python"]="Python'ı kur"
+    ["install_neovim"]="Neovim'i kur"
+    ["install_nodejs"]="Node.js'i kur"
+    ["install_tmux"]="Tmux'u kur"
+    ["install_ruby"]="Ruby'yi kur"
+    ["install_php"]="PHP'yi kur"
+    ["install_erlang"]="Erlang bulunamadı, yükleniyor..."
+    ["install_zsh"]="Zsh'i kur"
+    ["install_all"]="Tüm yazılımları kur"
+    ["example"]="Örnek: ./install.sh --all"
+    ["root_warning"]="Root izni bulunmuyor. Root izni olmadan bazı işlemler başarısız olabilir."
+    ["continue_prompt"]="Devam etmek istiyor musunuz? (E/h): "
+    ["installation_canceled"]="Kurulum iptal edildi."
+    ["root_detected"]="Root izni mevcut."
+    ["storage_exists"]="~/storage dizini zaten mevcut."
+    ["storage_prompt"]="Depolama yapısını yeniden oluşturmak istiyor musunuz? (Mevcut veriler üzerine yazılabilir) (E/h): "
+    ["storage_setup"]="Depolama yapısı oluşturuluyor..."
+    ["storage_not_reset"]="Depolama yapısı sıfırlanmadı. Devam ediliyor..."
+    ["storage_granted"]="Depolama izni verildi."
+    ["install_completed"]="Kurulum tamamlandı."
+    ["install_node"]="Node.js bulunamadı, yükleniyor..."
+    ["install_python"]="Python bulunamadı, yükleniyor..."
+    ["install_zsh"]="Zsh bulunamadı, yükleniyor..."
+    ["install_elixir"]="Elixir bulunamadı, yükleniyor..."
+    ["install_neovim"]="Neovim bulunamadı, yükleniyor..."
+    ["installation_failed"]="Yükleme başarısız oldu."
+    ["installation_completed"]="Yükleme tamamlandı."
+    ["unknown_option"]="Bilinmeyen seçenek: "
+    ["install_git"]="Git bulunamadı, yükleniyor..."
+    ["install_curl"]="Curl bulunamadı, yükleniyor..."
+    ["install_wget"]="Wget bulunamadı, yükleniyor..."
+    ["install_nano"]="Nano bulunamadı, yükleniyor..."
+    ["warning_restart"]="Değişikliklerin etkili olması için oturumu yeniden başlatın."
+    ["install_nerd_font"]="Nerd fontları bulunamadı, yükleniyor..."
+)
+
+# Mesajları dil seçimine göre getiren fonksiyon
+function get_message() {
+    local key=$1
+    if [ "$LANG" == "en" ]; then
+        echo "${MESSAGES_EN[$key]}"
+    else
+        echo "${MESSAGES_TR[$key]}"
+    fi
+}
+
+# Dil seçimini yap
+select_language
+
 function show_usage() {
-    echo -e "\\e[32mKullanım: install.sh [seçenekler]\\e[m"
-    echo -e "Kullanabileceğiniz seçenekler:"
-    echo -e "  -e, --elixir        Elixir'i kur"
-    echo -e "  -g, --go, --golang  Go'yu kur"
-    echo -e "  -p, --python        Python'ı kur"
-    echo -e "  -n, --nvim, --neovim Neovim'i kur"
-    echo -e "  -js, --nodejs       Node.js'i kur"
-    echo -e "  -t, --tmux          Tmux'u kur"
-    echo -e "  -r, --ruby          Ruby'yi kur"
-    echo -e "  --php               PHP'yi kur"
-    echo -e "  -z, --zsh           Zsh'i kur"
-    echo -e "  -a, --all           Tüm yazılımları kur"
-    echo -e "\\e[31mÖrnek: ./install.sh --all\\e[m"
+    echo -e "\\e[32m$(get_message usage)\\e[m"
+    echo -e "$(get_message available_options)"
+    echo -e "  -e, --elixir        $(get_message install_elixir)"
+    echo -e "  -g, --go, --golang  $(get_message install_golang)"
+    echo -e "  -p, --python        $(get_message install_python)"
+    echo -e "  -n, --nvim, --neovim $(get_message install_neovim)"
+    echo -e "  -js, --nodejs       $(get_message install_nodejs)"
+    echo -e "  -t, --tmux          $(get_message install_tmux)"
+    echo -e "  -r, --ruby          $(get_message install_ruby)"
+    echo -e "  --php               $(get_message install_php)"
+    echo -e "  -z, --zsh           $(get_message install_zsh)"
+    echo -e "  -a, --all           $(get_message install_all)"
+    echo -e "\\e[31m$(get_message example)\\e[m"
 }
 
 if [ $# -eq 0 ]; then
@@ -32,117 +142,141 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-# Root izni kontrolü
 function check_root() {
     if [ "$EUID" -ne 0 ]; then
-        echo -e "\\e[31m[ UYARI ]\\e[m Root izni bulunmuyor. Root izni olmadan bazı işlemler başarısız olabilir."
-        read -p "Devam etmek istiyor musunuz? (E/h): " -n 1 -r
-        echo    # Yeni satıra geç
-        if [[ ! $REPLY =~ ^[Ee]$ ]]; then
-            echo "Kurulum iptal edildi."
+        printf "\\e[31m[ UYARI ]\\e[m %s\\n" "$(get_message root_warning)"
+        read -p "$(get_message continue_prompt)" -n 1 -r
+        echo    
+        if [[ ! $REPLY =~ ^[YyEe]$ ]]; then
+            printf "%s\\n" "$(get_message installation_canceled)"
             exit 1
         fi
     else
-        echo -e "\\e[32m[ Root ]\\e[m Root izni mevcut."
+        printf "\\e[32m[ Root ]\\e[m %s\\n" "$(get_message root_detected)"
     fi
 }
 
-# termux-setup-storage izni kontrolü
 function check_storage_permission() {
     if [ -d "$HOME/storage" ]; then
-        echo -e "\\e[32m[ Depolama ]\\e[m ~/storage dizini zaten mevcut."
-        read -p "Depolama yapısını yeniden oluşturmak istiyor musunuz? (Bu mevcut verileri değiştirebilir) (E/h): " -n 1 -r
-        echo    # Yeni satıra geç
-        if [[ $REPLY =~ ^[Ee]$ ]]; then
+        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_exists)"
+        read -p "$(get_message storage_prompt)" -n 1 -r
+        echo   
+        if [[ $REPLY =~ ^[YyEe]$ ]]; then
             termux-setup-storage
-            echo -e "\\e[32m[ Depolama ]\\e[m Depolama yapısı yeniden oluşturuldu."
+            printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_setup)"
         else
-            echo -e "\\e[33m[ UYARI ]\\e[m Depolama yapısı yeniden oluşturulmadı. Devam ediliyor..."
+            printf "\\e[33m[ %s ]\\e[m %s\\n" "UYARI" "$(get_message storage_not_reset)"
         fi
     else
-        echo -e "\\e[32m[ Depolama ]\\e[m Depolama izni verilmiş."
+        printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message storage_granted)" "$(get_message storage_setup)"
         termux-setup-storage
     fi
 }
 
-
 function install_zsh() {
-    if ! [ -x "$(command -v zsh)" ]; then
-        echo -e "\\e[32m[ zsh ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y zsh  2>&1 && echo "Zsh başarıyla yüklendi" || echo "Zsh yükleme başarısız"
-    fi
+    install_package_if_needed zsh
+
     if [ ! -d "$HOME/.oh-my-zsh" ]; then
-        echo -e "\\e[32m[ oh-my-zsh ]\\e[m deposu kopyalanıyor"
-        git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" --depth 1 
+        printf "\\e[32m[ oh-my-zsh ]\\e[m %s\\n" "$(get_message storage_setup)"
+        git clone https://github.com/ohmyzsh/ohmyzsh.git "$HOME/.oh-my-zsh" --depth 1
     fi
+    
     curl -fsLo "$HOME/.oh-my-zsh/themes/lambda-mod.zsh-theme" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/lambda-mod.zsh-theme
     curl -fsLo "$HOME/.zshrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.zshrc
     curl -fsLo "$HOME/.profile" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.profile
+    
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" ]; then
-        echo -e "\\e[32m[ oh-my-zsh ]\\e[m sözdizimi vurgulama eklentisi indiriliyor"
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting" 
+        printf "\\e[32m[ oh-my-zsh ]\\e[m %s\\n" "$(get_message install_zsh)"
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$HOME/.oh-my-zsh/plugins/zsh-syntax-highlighting"
     fi
+    
     if [ ! -d "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" ]; then
-        echo -e "\\e[32m[ oh-my-zsh ]\\e[m otomatik öneri eklentisi indiriliyor"
-        git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions" 
+        printf "\\e[32m[ oh-my-zsh ]\\e[m %s\\n" "$(get_message install_node)"
+        git clone https://github.com/zsh-users/zsh-autosuggestions.git "$HOME/.oh-my-zsh/plugins/zsh-autosuggestions"
     fi
-
+    
     chsh -s zsh
-    echo -e "\\e[32m[ Zsh ]\\e[m Kurulum tamamlandı. Değişikliklerin etkili olabilmesi için kurulumdan sonra Termux'u yeniden başlatın."
+    printf "\\e[32m[ Zsh ]\\e[m %s\\n" "$(get_message installation_completed)"
 }
 
-
 function install_elixir() {
-    # unzip kurulu değilse yükle
-    if ! [ -x "$(command -v unzip)" ]; then
-        echo -e "\\e[32m[ unzip ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y unzip  2>&1 && echo "Unzip başarıyla yüklendi" || echo "Unzip yükleme başarısız"
-    fi
+    install_package_if_needed unzip
 
     mkdir -p "$HOME/.elixir" && cd "$HOME/.elixir" || exit
 
-    echo -e "\\e[32m[ elixir ]\\e[m en güncel versiyonu indiriliyor"
+    printf "\\e[32m[ elixir ]\\e[m %s\\n" "$(get_message install_elixir)"
     curl -L https://github.com/elixir-lang/elixir/releases/download/v1.17.2/elixir-otp-27.zip -o elixir-otp-27.zip
     unzip -qq elixir-otp-27.zip && rm elixir-otp-27.zip
     cd bin || exit
-    echo -e "\\e[32m[ elixir ]\\e[m ikili dosyalar düzeltiliyor"
+
+    printf "\\e[32m[ elixir ]\\e[m %s\\n" "$(get_message storage_setup)"
     termux-fix-shebang elixir elixirc iex mix
 
-    # Elixir'in PATH'e eklenmesi
     if ! grep -q 'export PATH="$PATH:$HOME/.elixir/bin"' "$HOME/.profile"; then
-    echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
+        echo 'export PATH="$PATH:$HOME/.elixir/bin"' >> "$HOME/.profile"
     fi
-    export PATH="$PATH:$HOME/.elixir/bin"  # Her durumda çalıştırılır
+    export PATH="$PATH:$HOME/.elixir/bin"
     cd "$HOME" || exit
 }
 
+
 function install_node() {
-    if ! [ -x "$(command -v node)" ]; then
-        echo -e "\\e[32m[ nodejs-lts ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y nodejs-lts  2>&1 && echo "Node.js başarıyla yüklendi" || echo "Node.js yükleme başarısız"
-        npm config set python python3
-        node -v
-        npm -v
-    fi
-    echo -e "\\e[32m[ npm ]\\e[m önek yapılandırılıyor"
+    install_package_if_needed nodejs-lts
+
+    npm config set python python3
+    node -v
+    npm -v
+
+    printf "\\e[32m[ npm ]\\e[m %s\\n" "$(get_message storage_setup)"
     mkdir -p "$HOME/.npm-packages"
     npm set prefix "$HOME/.npm-packages"
 
-    echo -e "\\e[32m[ yarn ]\\e[m yükleniyor"
+    printf "\\e[32m[ yarn ]\\e[m %s\\n" "$(get_message install_zsh)"
     if [ -d "$HOME/.yarn" ]; then
-        echo -e "\\e[32m[ yarn ]\\e[m mevcut yarn kaldırılıyor"
+        printf "\\e[32m[ yarn ]\\e[m %s\\n" "$(get_message storage_not_reset)"
         rm -rf "$HOME/.yarn"
     fi
-    echo -e "\\e[32m[ yarn ]\\e[m nightly sürümü indiriliyor"
-    curl -s -o- -L https://yarnpkg.com/install.sh | bash -s -- --nightly  2>&1
+    
+    printf "\\e[32m[ yarn ]\\e[m %s\\n" "$(get_message install_elixir)"
+    curl -s -o- -L https://yarnpkg.com/install.sh | bash -s -- --nightly 2>&1
     export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
-    echo -e "\\e[32m[ yarn ]\\e[m önek yapılandırılıyor"
-    $HOME/.yarn/bin/yarn config set prefix "$HOME/.npm-packages"  2>&1
+    
+    printf "\\e[32m[ yarn ]\\e[m %s\\n" "$(get_message storage_setup)"
+    $HOME/.yarn/bin/yarn config set prefix "$HOME/.npm-packages" 2>&1
 }
 
+function get_message_safe() {
+    local key=$1
+    local message
+    
+    if [ "$LANG" == "en" ]; then
+        message="${MESSAGES_EN[$key]}"
+    else
+        message="${MESSAGES_TR[$key]}"
+    fi
+
+    if [ -z "$message" ]; then
+        message="Installing $key..."
+    fi
+    
+    echo "$message"
+}
+
+function install_package_if_needed() {
+    local package_name=$1
+    local message_key="install_${package_name}"
+    
+    if ! [ -x "$(command -v $package_name)" ]; then
+        printf "\\e[32m[ %s ]\\e[m %s\\n" "$package_name" "$(get_message_safe $message_key)"
+        if pkg install -y "$package_name" 2>&1; then
+            printf "\\e[32m%s\\n" "$(get_message install_completed)"
+        else
+            printf "\\e[31m%s\\n" "$(get_message installation_failed)" >&2
+        fi
+    fi
+}
 
 function install_requirements() {
-    # Gerekli paketlerin listesi
     required_packages=(
         git
         curl
@@ -171,21 +305,13 @@ function install_requirements() {
         w3m
     )
     
-    # Paketlerin kurulumu
-    echo -e "\\e[32m[ Paketler ]\\e[m Güncellemeler yapılıyor..."
+    printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message install_all)" "$(get_message storage_setup)"
     pkg update -y && pkg upgrade -y
 
-    echo -e "\\e[32m[ Gerekli paketler ]\\e[m Kuruluyor..."
     for package in "${required_packages[@]}"; do
-        if ! [ -x "$(command -v $package)" ]; then
-            echo -e "\\e[32m[ $package ]\\e[m bulunamadı, yükleniyor"
-            pkg install -y "$package" 2>&1 && echo "$package başarıyla yüklendi" || echo "$package yükleme başarısız"
-        else
-            echo -e "\\e[32m[ $package ]\\e[m zaten kurulu"
-        fi
+        install_package_if_needed "$package"
     done
 
-    # Ek dizin oluşturma ve profil yapılandırması
     if [ ! -d "$HOME/.local/bin" ]; then
         mkdir -p "$HOME/.local/bin"
         echo 'export PATH="$PATH:$HOME/.local/bin"' >> "$HOME/.profile"
@@ -198,13 +324,10 @@ function install_requirements() {
 
 
 function install_neovim() {
-    if ! [ -x "$(command -v nvim)" ]; then
-        echo -e "\\e[32m[ neovim ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y neovim  2>&1 && echo "Neovim başarıyla yüklendi" || echo "Neovim yükleme başarısız"
-    fi
-    
+    install_package_if_needed neovim
+
     if [ -d "$HOME/.config/nvim" ]; then
-        echo -e "\\e[32m[ Neovim ]\\e[m önceki ayarlar temizleniyor..."
+        printf "\\e[32m[ Neovim ]\\e[m %s\\n" "$(get_message storage_not_reset)"
         rm -rf "$HOME/.config/nvim"
     fi
     if [ -d "$HOME/.local/state/nvim" ]; then
@@ -214,23 +337,23 @@ function install_neovim() {
         rm -rf "$HOME/.local/share/nvim"
     fi
 
-    # NvChad kurulumu
-    echo -e "\\e[32m[ NvChad ]\\e[m kuruluyor..."
+    printf "\\e[32m[ NvChad ]\\e[m %s\\n" "$(get_message install_neovim)"
     git clone https://github.com/NvChad/starter ~/.config/nvim
     
     rm -rf ~/.config/nvim/.git
 }
 
 
-function install_nerd_font(){
+function install_nerd_font() {
     if ! [ -x "$(command -v termux-nerd-installer)" ]; then
+        printf "\\e[32m[ termux-nerd-installer ]\\e[m %s\\n" "$(get_message install_nerd_font)"
         git clone https://github.com/notflawffles/termux-nerd-installer.git
-        cd termux-nerd-installer || exit 1  
+        cd termux-nerd-installer || exit 1
         make install
-        cd ..  
-        rm -rf termux-nerd-installer  
+        cd ..
+        rm -rf termux-nerd-installer
     else
-        echo -e "\\e[32m[ termux-nerd-installer ]\\e[m zaten kurulu"
+        printf "\\e[32m[ termux-nerd-installer ]\\e[m %s\\n" "$(get_message install_nerd_font)"
     fi
 
     termux-nerd-installer install fira-code
@@ -240,42 +363,39 @@ function install_nerd_font(){
 
 
 function install_ruby() {
-    if ! [ -x "$(command -v ruby)" ]; then
-        echo -e "\\e[32m[ ruby ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y ruby 2>&1 && echo "Ruby başarıyla yüklendi" || echo "Ruby yükleme başarısız"
-    fi
-    echo -e "\\e[32m[ ruby ]\\e[m pry yükleniyor"
-    gem install pry  2>&1
+    install_package_if_needed ruby
+
+    printf "\\e[32m[ Ruby ]\\e[m %s\\n" "$(get_message install_python)"
+    gem install pry 2>&1
 }
 
+
 function install_tmux() {
-    if ! [ -x "$(command -v tmux)" ]; then
-        echo -e "\\e[32m[ tmux ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y tmux  2>&1
-    fi
+    install_package_if_needed tmux
+    
+    printf "\\e[32m[ Tmux ]\\e[m %s\\n" "$(get_message install_neovim)"
     curl -fsLo "$HOME/.tmux.conf" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.tmux.conf
 }
 
+
 function install_python() {
-    if ! [ -x "$(command -v python)" ]; then
-        echo -e "\\e[32m[ python ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y python  2>&1 && echo "Python başarıyla yüklendi" || echo "Python yükleme başarısız"
-    fi
+    install_package_if_needed python
+
     curl -fsLo "$HOME/.pythonrc" https://raw.githubusercontent.com/yuceltoluyag/termux.dot/main/.termux/.pythonrc
 }
 
 function install_php() {
-    echo -e "\\e[32m[ php ]\\e[m bulunamadı, yükleniyor"
-    pkg install -y nginx php php-fpm  2>&1 && echo "PHP ve Nginx başarıyla yüklendi" || echo "PHP ve Nginx yükleme başarısız"
+    install_package_if_needed nginx
+    install_package_if_needed php
+    install_package_if_needed php-fpm
 }
 
+
 function install_golang() {
-    echo -e "\\e[32m[ go ]\\e[m bulunamadı, yükleniyor"
-    pkg install -y golang  2>&1 && echo "Go başarıyla yüklendi" || echo "Go yükleme başarısız"
-    
+    install_package_if_needed golang
+
     mkdir -p "$HOME/.go"
 
-    # Go'nun PATH'e eklenmesi
     if ! grep -q 'export GOPATH="$HOME/.go"' "$HOME/.profile"; then
         echo 'export GOPATH="$HOME/.go"' >> "$HOME/.profile"
     fi
@@ -283,7 +403,8 @@ function install_golang() {
     if ! grep -q 'export PATH="$PATH:$HOME/.go/bin"' "$HOME/.profile"; then
         echo 'export PATH="$PATH:$HOME/.go/bin"' >> "$HOME/.profile"
     fi
-    export PATH="$PATH:$HOME/.go/bin"  # Her durumda çalıştırılır
+
+    export PATH="$PATH:$HOME/.go/bin"  
 }
 
 function start() {
@@ -316,8 +437,9 @@ function start() {
 
 function finish() {
     touch "$HOME/.hushlogin"
-    if ! grep -q "source ~/.profile" $HOME/.bash_profile  2>&1; then
-        echo -e "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi" >> "$HOME/.bash_profile"
+
+    if ! grep -q "source ~/.profile" "$HOME/.bash_profile" 2>&1; then
+        printf "\nif [ -f ~/.profile ]; then\n  source ~/.profile\nfi\n" >> "$HOME/.bash_profile"
     fi
 
     if [ -f "$HOME/.zshrc" ]; then
@@ -325,10 +447,9 @@ function finish() {
             echo 'if [ -f ~/.profile ]; then source ~/.profile; fi' >> "$HOME/.zshrc"
         fi
     fi
-    
-    echo -e "\\e[32m[ tamamlandı ]\\e[m Ayarların uygulanması için lütfen Termux'u yeniden başlatın"
-}
 
+    printf "\\e[32m[ %s ]\\e[m %s\\n" "$(get_message install_completed)" "$(get_message installation_completed)"
+}
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -370,7 +491,9 @@ while [[ $# -gt 0 ]]; do
         php=true
         zsh=true
         ;;
-    *) echo -e "Bilinmeyen seçenek: $1" ;;
+    *)
+        printf "\\e[31m%s\\e[m\\n" "$(get_message 'unknown_option') $1"
+        ;;
     esac
     shift
 done
@@ -395,7 +518,6 @@ if [ "$nvimrc" = true ]; then
     install_nerd_font
 fi
 
-
 if [ "$tmux" = true ]; then
     install_tmux
 fi
@@ -414,17 +536,17 @@ fi
 
 if [ "$elixir" = true ]; then
     if ! [ -x "$(command -v erl)" ]; then
-        echo -e "\\e[32m[ erlang ]\\e[m bulunamadı, yükleniyor"
-        pkg install -y erlang  2>&1
+    install_package_if_needed erlang
     fi
+
     if [ ! -d "$HOME/.elixir" ]; then
-        echo -e "\\e[32m[ elixir ]\\e[m kuruluyor..."
+        printf "\\e[32m[ Elixir ]\\e[m %s\\n" "$(get_message 'install_elixir')"
         install_elixir
     fi
 fi
 
-source $HOME/.profile
-echo -e "\\e[33m[ UYARI ]\\e[m Bu değişikliklerin uygulanması için yeni bir oturum açmanız gerekebilir."
+source "$HOME/.profile"
+printf "\\e[33m[ %s ]\\e[m\\n" "$(get_message 'warning_restart')"
 
 finish
 

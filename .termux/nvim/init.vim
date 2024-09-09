@@ -92,6 +92,9 @@ endif
 
 call plug#end()
 
+" Eklentiler yüklü değilse otomatik olarak yükle
+autocmd VimEnter * if empty(glob('~/.vim/plugged/*')) | PlugInstall | endif
+
 " Neosnippet ayarları
 imap <C-k> <Plug>(neosnippet_expand_or_jump)
 smap <C-k> <Plug>(neosnippet_expand_or_jump)

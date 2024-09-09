@@ -105,8 +105,3 @@ Katkıda bulunmak isterseniz, bu projeyi fork'layıp kendi geliştirmelerinizi y
 ## Lisans
 
 Bu proje MIT Lisansı ile lisanslanmıştır. Daha fazla bilgi için `LICENSE` dosyasına bakın.
-
-```
-
-
-```

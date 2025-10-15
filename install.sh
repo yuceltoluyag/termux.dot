@@ -394,7 +394,7 @@ function install_neovim() {
 function install_nerd_font() {
     if ! [ -x "$(command -v termux-nerd-installer)" ]; then
         printf "\\e[32m[ termux-nerd-installer ]\\e[m %s\\n" "$(get_message install_nerd_font)"
-        git clone https://github.com/notflawffles/termux-nerd-install.git
+        git clone https://github.com/yuceltoluyag/termux-nerd-install.git
         cd termux-nerd-install || exit 1
         make install
         cd ..

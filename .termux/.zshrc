@@ -1,6 +1,6 @@
 # Oh-My-Zsh Yolu
 export ZSH=$HOME/.oh-my-zsh
-
+export PATH="$HOME/.local/bin:$PATH"
 # Tema
 ZSH_THEME="lambda-mod"
 
